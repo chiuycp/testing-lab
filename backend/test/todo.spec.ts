@@ -67,18 +67,52 @@ describe('Todo API Testing', () => {
 
   test('Given a valid ID and status, When receive a PUT /api/v1/todos/:id request, Then it should response the updated todo object', async () => {
     // arrange: mock the repo function to return an updated todo object
+    const updatedTodo: Todo = {
+      id: '1',
+      name: 'todo 1',
+      description: 'updated description',
+      status: true
+    }
+    const payload: TodoBody = {
+      name: 'todo 1',
+      description: 'updated description',
+      status: true
+    }
+    // 使用 spyOn 模擬更新資料庫後的行為
+    vi.spyOn(TodoRepo, 'updateTodo').mockImplementation(async () => updatedTodo)
 
     // act: receive a PUT /api/v1/todos/:id request
+    const response = await server.inject({
+      method: 'PUT',
+      url: '/api/v1/todos/1',
+      payload: payload
+    })
 
     // assert: response should be the updated todo object
+    const result = JSON.parse(response.body)['todo']
+    expect(response.statusCode).toBe(200)
+    expect(result).toStrictEqual(updatedTodo)
+  })
+
   })
 
   test('Given an invalid ID, When receive a PUT /api/v1/todos/:id request, Then it should response with status code 404', async () => {
     // arrange: mock the repo function to return null
+    vi.spyOn(TodoRepo, 'updateTodo').mockImplementation(async () => null)
 
     // act: receive a PUT /api/v1/todos/:id request
+    const response = await server.inject({
+      method: 'PUT',
+      url: '/api/v1/todos/999', // 假設 999 是一個不存在的 ID
+      payload: {
+        name: 'ghost',
+        description: 'none',
+        status: true
+      }
+    })
 
     // assert: response should with status code 404
-
+    expect(response.statusCode).toBe(404)
+  })
   })
 })
